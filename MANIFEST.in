@@ -1,0 +1,5 @@
+include CHANGELOG LICENSE README.rst suponoff-monhelper.py
+graft suponoff
+graft demo
+recursive-exclude * __pycache__
+recursive-exclude * *~ *.pyc *.pyo

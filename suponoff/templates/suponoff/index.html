@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% load suponoff %}
+{% load staticfiles %}
+
+  <head>
+	<meta charset="utf-8"/>
+
+	{% block title %}
+	<title>Supervisor On/Off</title>
+	{% endblock title %}
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//gitcdn.github.io/bootstrap-toggle/2.0.0/css/bootstrap-toggle.min.css">
+
+	<style>
+
+	div.server {
+		float: left;
+		border: 1px solid;
+		border-radius:10px;
+		background-color: #eee;
+		padding: 10px;
+		margin: 10px;
+		background: linear-gradient(#fff, #ccd);
+		box-shadow: 5px 5px 5px #aaa;
+	}
+	div.group {
+		float: left;
+		border:2px solid;
+		border-radius:5px;
+		padding: 4px;
+		margin: 4px;
+		background: #eee;
+	}
+
+	div.program {
+		float: left;
+		border: 1px solid;
+		padding: 4px;
+		margin: 4px;
+		display: none;
+		background: #ffffff;
+	}
+
+	.program-description {
+		font-style: oblique;
+		font-family: mono;
+	}
+
+	#show-logs-dialog pre {
+		overflow: auto;
+		word-break: normal !important;
+		word-wrap: normal !important;
+		white-space: pre !important;
+	}
+
+	.jqstooltip {
+		width: 150px;
+		height: 25px !important;
+    }
+
+	.server .bg-success {
+		background: #00FF00;
+	}
+	.server .bg-warning {
+		background: #FFFF00;
+	}
+	.server .bg-danger {
+		background: #FF5930;
+	}
+
+	#page-loading {
+		background: url("{% static 'suponoff/ajax-loader.gif'%}") no-repeat scroll center center;
+		position: absolute;
+		height: 100%;
+		width: 100%;
+	}
+
+	</style>
+
+	{% block extra_head %}
+	{% endblock extra_head %}
+
+  </head>
+
+
+  <body>
+
+  	{% block body %}
+
+	<div id="page-loading"></div>
+
+  	{% block content %}
+
+	<table>
+	{% for taggroup_label, tags in taggroups %}
+	<tr>
+	<td><div  style="margin: 2px">{{ taggroup_label }}</div></td>
+	<td>
+	<div id="tag-toggles" style="margin: 2px">
+		<div class="taggroup btn-group" data-toggle="buttons">
+			{% for tag in tags %}
+			{% with tag_config=tags_config|get_item:tag %}
+			{% with tag_enabled=tag_config.enabled_by_default %}
+			<label class="btn btn-primary {% if tag_enabled %}active{% endif %}">
+				<input type="checkbox" data-tag="{{tag}}"
+				{% if tag_enabled %}
+				checked
+				{% endif %}
+				>
+				{{tag}}
+			</label>
+			{% endwith %}
+			{% endwith %}
+			{% endfor %}
+		</div>
+	</div>
+	</td>
+	</tr>
+	{% endfor %}
+	</table>
+
+	<div class="clearfix" style="clear:both; margin: 10px">
+		Mode: <input id="tag-filter-mode" type="checkbox" data-toggle="toggle"
+		             data-on="AND" data-off="OR">
+		<a href="#" onclick="on_show_all_tags_clicked()">[all]</a>
+		<a href="#" onclick="on_show_no_tags_clicked()">[none]</a>
+	</div>
+
+	{% for server, groups in data.items %}
+
+	<div class="server" id="server-{{server}}" data-server-name="{{ server }}">
+	  <h3>Server: <a href="http://{{ server }}:9001">{{ server }}</a>
+		<div style="float: right">
+		  <button type="button" class="btn btn-success btn-xs startall"
+		          data-loading-text="Starting all programs..."
+		          onclick="on_startall_clicked(this)"
+		          >
+		          Start All
+		  </button>
+		  <button type="button" class="btn btn-danger btn-xs stopall"
+		          data-loading-text="Stopping all programs..."
+		          onclick="on_stopall_clicked(this)"
+		          >
+		          Stop All
+		   </button>
+		</div>
+
+	  </h3>
+
+
+	  {% for group_name, group in groups.items %}
+
+	    <div id="group-{{group_name}}" class="group" data-group-name="{{ group_name }}"
+	         data-tags="{{group.tags|join:' '}}"
+	    >
+		  <h4>
+			<span class="group-name">{{ group_name }}</span>
+			{% if group.total_processes > 1 %}
+			<small>(<span class="num-processes-running"></span> / {{group.total_processes}} running)</small>
+			{% endif %}
+			<button type="button" class="btn btn-default btn-xs group_details_toggle">Details</button>
+		  </h4>
+
+		  {% if group.tags %}
+		  <div style="margin-bottom: 6px">
+		  {% for tag in group.tags %}
+		    <span class="badge">{{tag}}</span>
+		  {% endfor %}
+		  </div>
+		  {% endif %}
+
+		  {% for program in group.processes %}
+	      <div id="process-{{program.name}}" class="program"
+	           data-program-name="{{ program.name }}"
+	           data-pid="{{ program.pid }}"
+	        >
+			<h5>{{ program.name }}: <span class="program-state"></span></h5>
+			<span class="program-description">{{program.description}}</span>
+			<button class="btn btn-xs" onclick="open_stdout(this)">stdout</button>
+			<button class="btn btn-xs" onclick="open_stderr(this)">stderr</button>
+			<button class="btn btn-xs applog" onclick="open_applog(this)"
+			        title="Opens the application log file `{{program.application_logfile}}'."
+			        >
+			        applog
+			</button>
+		    <br>
+			<h6 class="resources-heading" style="display: none">Resources:</h6>
+
+			{# Open files #}
+			<div class="resource fileno" style="display: none">
+			  File descriptors: <span class="textual-value"></span>
+			  <br/>
+			  <div class="progress" style="margin-bottom: 2px; display: none">
+				<div class="progress-bar" role="progressbar" aria-valuenow="" aria-valuemin="0" aria-valuemax="">
+				</div>
+			  </div>
+			</div>
+
+
+			{# VM size #}
+			<div class="resource vmsize" style="display: none">
+			  VM size: <span class="textual-value"></span>
+			  <br/>
+			  <div class="progress" style="margin-bottom: 2px; display: none">
+				<div class="progress-bar" role="progressbar" aria-valuenow="" aria-valuemin="0" aria-valuemax="">
+				</div>
+			  </div>
+			</div>
+
+			{# numthreds #}
+			<div class="resource numthreads" style="display: none">
+			  Threads: <span class="numthreads">?</span>
+			</div>
+
+			{# numchildren #}
+			<div class="resource numchildren" style="display: none">
+			  Child processes: <span class="numchildren">?</span>
+			</div>
+
+			{# cpu #}
+			<div class="resource cpu" style="width=100%; height: 32px; line-height: 32px;">
+			  <div style="display: inline-block; height: 24px; vertical-align: bottom">CPU (%):&nbsp;</div><div style="display: inline-block; height: 32px; vertical-align: bottom" class="sparkline">...</div>
+			</div>
+
+			{# Disk IO #}
+			<div class="resource diskio" style="width=100%; height: 32px; line-height: 32px;">
+			  <div style="display: inline-block; height: 24px; vertical-align: bottom">Disk I/O (kB/s):&nbsp;</div><div style="display: inline-block; height: 32px; vertical-align: bottom" class="sparkline">...</div>
+			</div>
+
+			{% if group.total_processes > 1 %}
+		    <br>
+			<div class="clearfix" style="clear:both;">
+			  <button type="button" class="btn btn-primary" data-loading-text="Starting..." onclick="on_program_start_clicked(this)">Start</button>
+			  <button type="button" class="btn btn-primary" data-loading-text="Restarting..." onclick="on_program_restart_clicked(this)">Restart</button>
+			  <button type="button" class="btn btn-primary" data-loading-text="Stopping..." onclick="on_program_stop_clicked(this)">Stop</button>
+			</div>
+			{% endif %}
+
+		  </div>
+		  {% endfor %} {# programs loop #}
+		  <div class="clearfix" style="clear:both;">
+			<button type="button" class="btn btn-primary" data-loading-text="Starting..." onclick="on_group_start_clicked(this)">Start</button>
+			<button type="button" class="btn btn-primary" data-loading-text="Restarting..." onclick="on_group_restart_clicked(this)">Restart</button>
+			<button type="button" class="btn btn-primary" data-loading-text="Stopping..." onclick="on_group_stop_clicked(this)">Stop</button>
+		  </div>
+		</div> {# group #}
+
+		{% endfor %}  {# groups loop #}
+
+	</div> {# closes server #}
+
+	{% endfor %}  {# servers loop #}
+
+  	{% endblock content %}
+
+	<div class="modal fade" id="show-logs-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-lg">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<h4 class="modal-title" id="myModalLabel">Modal title</h4>
+		  </div>
+		  <div class="modal-body"><pre></pre>
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+
+
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js"></script>
+	<script src="//gitcdn.github.io/bootstrap-toggle/2.0.0/js/bootstrap-toggle.min.js"></script>
+
+	<script src="{% static "suponoff/suponoff.js" %}"></script>
+
+  	{% endblock body %}
+
+  </body>
+
+</html>
