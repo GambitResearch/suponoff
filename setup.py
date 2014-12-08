@@ -9,7 +9,7 @@ if __name__ == '__main__':
         name="suponoff",
         version=version,
         author="Gambit Research",
-        author_email="info@gambitresearch.com",
+        author_email="opensource@gambitresearch.com",
         description="An alternative Supervisor web interface.",
         long_description=long_description,
         license="BSD",
