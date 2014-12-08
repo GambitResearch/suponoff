@@ -23,3 +23,7 @@ applications and includes the URLs from 'suponoff.urls'.  Then you add the
 SUPERVISORS setting (a list of hostnames).  The web interface can also add
 "tags" to each program, allowing you to filter by tags.  For an example, see the
 `demo` project in the source distribution.
+
+Screenshot:
+-----------
+.. image:: https://raw.githubusercontent.com/GambitResearch/suponoff/master/demo/screenshot.png
