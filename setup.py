@@ -13,7 +13,7 @@ if __name__ == '__main__':
         description="An alternative Supervisor web interface.",
         long_description=long_description,
         license="BSD",
-        url="",
+        url="https://github.com/GambitResearch/suponoff",
         zip_safe=False,
         include_package_data=True,
         packages=find_packages(),
