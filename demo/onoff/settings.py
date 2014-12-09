@@ -84,7 +84,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': '/var/log/mollyonoff/mollyonoff.log',
+            'filename': '/tmp/suponoff.log',
             'when': 'midnight',
             'formatter': 'verbose'
         },
@@ -114,7 +114,7 @@ LOGGING = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = '/molly/static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticroot", "static")
 
 
