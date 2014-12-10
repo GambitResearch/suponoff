@@ -31,7 +31,7 @@ if __name__ == '__main__':
             "Framework :: Django",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: BSD License",
-            "Operating System :: Linux",
+            "Operating System :: OS Independent",
             "Programming Language :: Python",
             "Programming Language :: Python :: 3",
             "Programming Language :: Python :: 3.3",
