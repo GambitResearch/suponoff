@@ -127,8 +127,13 @@ def home(request, template_name="suponoff/index.html"):
     for name, tags in sorted(tags_by_group.items()):
         taggroups.append((taggroups_dict[name].label, sorted(tags)))
 
+    # sort everything
+    data = []
+    for server, groups in sorted(services_by_host.items()):
+        data.append((server, sorted(groups.items())))
+
     context = {
-        "data": services_by_host,
+        "data": data,
         "taggroups": taggroups,
         'tags_config': tags_config,
         "SITE_ROOT": settings.SITE_ROOT,

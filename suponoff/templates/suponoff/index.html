@@ -128,7 +128,7 @@
 		<a href="#" onclick="on_show_no_tags_clicked()">[none]</a>
 	</div>
 
-	{% for server, groups in data.items %}
+	{% for server, groups in data %}
 
 	<div class="server" id="server-{{server}}" data-server-name="{{ server }}">
 	  <h3>Server: <a href="http://{{ server }}:9001">{{ server }}</a>
@@ -149,8 +149,7 @@
 
 	  </h3>
 
-
-	  {% for group_name, group in groups.items %}
+	  {% for group_name, group in groups %}
 
 	    <div id="group-{{group_name}}" class="group" data-group-name="{{ group_name }}"
 	         data-tags="{{group.tags|join:' '}}"
