@@ -373,6 +373,10 @@ function update_process(server_name, group_name, process)
 	var state_class = ALERT_LEVEL_CLASSES[alert_level]
 	program_div.find('>h5').removeClass('bg-success bg-danger bg-info bg-warning').addClass(state_class)
 
+	if (alert_level > 1) {
+		program_div.parent(".group").show();
+	}
+
 	return alert_level;
 }
 
