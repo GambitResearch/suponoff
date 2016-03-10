@@ -46,11 +46,12 @@ def _get_server_data(hostname, resource_pids, metadata):
             group_name = process['group']
             group = server.setdefault(group_name,
                                       {"processes": [],
-                                      "total_processes": 0,
-                                      "running_processes": 0})
+                                       "total_processes": 0,
+                                       "running_processes": 0})
             process["can_be_stopped"] = process["statename"] in {"RUNNING"}
             process["can_be_restarted"] = process["statename"] in {"RUNNING"}
-            process["can_be_started"] = process["statename"] in {"STOPPED", "EXITED"}
+            process["can_be_started"] = \
+                process["statename"] in {"STOPPED", "EXITED"}
             if process["statename"] in {"RUNNING"}:
                 group['running_processes'] += 1
             else:
@@ -101,16 +102,15 @@ def _get_data(server_pids, metadata):
 
 
 def get_data(request):
-    #resource_pids = set(int(x) for x in request.GET.getlist('pid[]'))
+    # resource_pids = set(int(x) for x in request.GET.getlist('pid[]'))
     data = json.loads(request.body.decode("ascii"))
-    #LOG.debug("data: %r", data)
+    # LOG.debug("data: %r", data)
     data = _get_data(data['server_pids'], [])
     data_json = json.dumps(data)
     return HttpResponse(data_json, content_type='application/json')
 
 
-@ensure_csrf_cookie
-def home(request, template_name="suponoff/index.html"):
+def get_index_template_data():
     metadata, tags_config, taggroups_dict = _get_metadata_conf()
     services_by_host = _get_data({}, metadata)
 
@@ -138,10 +138,13 @@ def home(request, template_name="suponoff/index.html"):
         'tags_config': tags_config,
         "SITE_ROOT": settings.SITE_ROOT,
     }
+    return context
 
+
+@ensure_csrf_cookie
+def home(request, template_name="suponoff/index.html"):
+    context = get_index_template_data()
     context.update(csrf(request))
-
-    #LOG.debug("Context: %s", context)
     resp = render_to_response(template_name, context)
     return resp
 
@@ -152,10 +155,12 @@ def action(request):
     try:
         if 'action_start_all' in request.POST:
             supervisor.supervisor.startAllProcesses()
-            return HttpResponse(json.dumps("ok"), content_type='application/json')
+            return HttpResponse(json.dumps("ok"),
+                                content_type='application/json')
         elif 'action_stop_all' in request.POST:
             supervisor.supervisor.stopAllProcesses()
-            return HttpResponse(json.dumps("ok"), content_type='application/json')
+            return HttpResponse(json.dumps("ok"),
+                                content_type='application/json')
         program = "{}:{}".format(request.POST['group'], request.POST['program'])
         if 'action_start' in request.POST:
             supervisor.supervisor.startProcess(program)
@@ -176,20 +181,22 @@ def get_program_logs(request):
     stream = request.GET['stream']
     assert stream in {'stdout', 'stderr', 'applog'}
 
+    full_name = "{}:{}".format(request.GET['group'],
+                               request.GET['program'])
     if stream == 'stdout':
         supervisor = _get_supervisor(request.GET['server'])
         try:
-            logs, _offeset, _overflow = supervisor.supervisor.tailProcessStdoutLog(
-                "{}:{}".format(request.GET['group'], request.GET['program']),
-                -100000, 100000)
+            logs, _offeset, _overflow = \
+                supervisor.supervisor.tailProcessStdoutLog(
+                    full_name, -100000, 100000)
         finally:
             supervisor("close")()
     elif stream == 'stderr':
         supervisor = _get_supervisor(request.GET['server'])
         try:
-            logs, _offeset, _overflow = supervisor.supervisor.tailProcessStderrLog(
-                "{}:{}".format(request.GET['group'], request.GET['program']),
-                -100000, 100000)
+            logs, _offeset, _overflow = \
+                supervisor.supervisor.tailProcessStderrLog(
+                    full_name, -100000, 100000)
         finally:
             supervisor("close")()
     elif stream == 'applog':
