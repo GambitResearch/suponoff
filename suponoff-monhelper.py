@@ -42,10 +42,15 @@ class MonHelperRPCInterface:  # pylint: disable=R0923
         try:
             results = {}
             for pid in pid_list:
+                if pid == 0:
+                    continue
                 result = {}
                 results[str(pid)] = result
                 try:
                     proc = psutil.Process(pid)
+                except psutil.NoSuchProcess as e:
+                    LOG.info("Process %s: %s", pid, e.msg)
+                    continue
                 except:
                     LOG.exception("Process %s:", pid)
                     continue
