@@ -5,10 +5,13 @@ A supervisor-like XML-RPC server that offers an interface to retrieve resource
 usage and limits of processes, and access to application log files (in addition
 to the stdout and stderr access that supervisord already provides).
 
-To use this, copy this file to each server you want to manage, and run it as
-root (perhaps from supervisor itself).  It listens on 0.0.0.0:9002, so that the
-suponoff web app can connect to it.  It requires the python module `psutil' to
-be installed.
+To use this, copy this file to each server you want to manage and run it,
+perhaps from supervisor itself (it may need to be run as root).
+By default, it listens on 0.0.0.0:9002, so that the suponoff web app can
+connect to it. This may pose a security threat: use option "-a 127.0.0.0.1"
+when the suponoff app is on the same machine or when the traffic can be
+channelled through a secure connection (e.g., SSH or https).
+It requires the python module `psutil' to be installed.
 
 """
 
@@ -172,7 +175,17 @@ def split_namespec(namespec):
     return group_name, process_name
 
 
-def main():
+def main(args=None):
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--address', '-a', default='0.0.0.0', help='the '
+                        'address on which the server is listening (e.g., '
+                        '"127.0.0.1", default "0.0.0.0").')
+    parser.add_argument('--port', '-p', type=int, default=9002, help='the port'
+                        ' on which the server is listening (default "9002").')
+    args = parser.parse_args(args)
+
     logging.basicConfig(format="%(asctime)s %(levelname)s "
                                "%(filename)s:%(lineno)d %(message)s")
 
@@ -180,7 +193,8 @@ def main():
 
     LOG.info("psutil version %s at %s", psutil.__version__, psutil.__file__)
 
-    server = SimpleXMLRPCServer(("0.0.0.0", 9002))
+    server = SimpleXMLRPCServer((args.address, args.port))
+    LOG.info("serving on %s:%d", args.address, args.port)
     server.register_introspection_functions()
     server.register_instance(MonHelperRPCInterface())
     server.serve_forever()
