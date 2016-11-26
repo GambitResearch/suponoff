@@ -22,14 +22,20 @@ LOG = logging.getLogger(__name__)
 
 
 def _get_supervisor(hostname):
-    supervisor = xmlrpc.client.ServerProxy("http://{}:9001".format(hostname),
-                                           verbose=False)
+    if isinstance(settings.SUPERVISORS, dict):
+        url = settings.SUPERVISORS[hostname][0]
+    else:
+        url = "http://{}:9001".format(hostname) 
+    supervisor = xmlrpc.client.ServerProxy(url, verbose=False)
     return supervisor
 
 
 def _get_monhelper(hostname):
-    monhelper = xmlrpc.client.ServerProxy(
-        "http://{}:9002".format(hostname), verbose=False)
+    if isinstance(settings.SUPERVISORS, dict):
+        url = settings.SUPERVISORS[hostname][1]
+    else:
+        url = "http://{}:9002".format(hostname) 
+    monhelper = xmlrpc.client.ServerProxy(url, verbose=False)
     return monhelper
 
 
