@@ -37,11 +37,19 @@ def configure(site_path, supervisors, debug):
         SUPERVISORS=supervisors,
         STATIC_URL='/'+site_path+'static/',
         SITE_ROOT='/'+site_path,
+        # django<=1.8
         TEMPLATE_CONTEXT_PROCESSORS=['django.core.context_processors.request'],
         TEMPLATE_LOADERS=[
             'django.template.loaders.filesystem.Loader',
             'django.template.loaders.app_directories.Loader',
         ],
+        # django>=1.8
+        TEMPLATES = [
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'APP_DIRS': True,
+            },
+        ]
     )
 
 

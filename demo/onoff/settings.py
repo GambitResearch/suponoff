@@ -21,7 +21,6 @@ SECRET_KEY = 'yn_dbk=-f3xtl)8dq1uk9*_sdg^y*6)u*$bmcq2)%u^vb3z&-x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-TEMPLATE_DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -38,17 +37,23 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-from django.conf import settings
-TEMPLATE_CONTEXT_PROCESSORS = list(settings.TEMPLATE_CONTEXT_PROCESSORS)
-TEMPLATE_CONTEXT_PROCESSORS.append('django.core.context_processors.request')
+# Templates
+from django import get_version
+if get_version() == '1.7':
+    TEMPLATE_DEBUG = DEBUG
+    TEMPLATE_LOADERS = [
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    ]
+    TEMPLATE_CONTEXT_PROCESSORS = ['django.core.context_processors.request'],
+else:
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'APP_DIRS': True,
+        },
+    ]
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = [
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-]
-
-TEMPLATE_DIRS = [os.path.join(BASE_DIR, "templates")]
 
 SITE_ROOT = "http://127.0.0.1:8000"
 
