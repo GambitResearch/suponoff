@@ -15,6 +15,7 @@ It requires the python module `psutil' to be installed.
 
 """
 
+import argparse
 import time
 import os
 import os.path
@@ -52,7 +53,7 @@ class MonHelperRPCInterface:  # pylint: disable=R0923
                 try:
                     proc = psutil.Process(pid)
                 except psutil.NoSuchProcess as e:
-                    LOG.info("Process %s: %s", pid, e.msg)
+                    LOG.info("No such process: %s", e.msg)
                     continue
                 except:
                     LOG.exception("Process %s:", pid)
@@ -176,8 +177,6 @@ def split_namespec(namespec):
 
 
 def main(args=None):
-    import argparse
-
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--address', '-a', default='0.0.0.0', help='the '
                         'address on which the server is listening (e.g., '
@@ -198,6 +197,7 @@ def main(args=None):
     server.register_introspection_functions()
     server.register_instance(MonHelperRPCInterface())
     server.serve_forever()
+
 
 if __name__ == '__main__':
     main()

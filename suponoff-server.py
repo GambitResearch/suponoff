@@ -9,11 +9,14 @@ It requires the python module `cherrypy' to be installed.
 """
 
 
+import argparse
+
+import cherrypy
 import django
 from django.conf import settings
 from django.conf.urls import include, url
 from django.utils.crypto import get_random_string
-
+from django.core.handlers.wsgi import WSGIHandler
 
 import suponoff
 
@@ -55,10 +58,7 @@ def configure(site_path, supervisors, debug):
 
 def main(args=None):
 
-    import cherrypy
-    from django.core.handlers.wsgi import WSGIHandler
-    import argparse
-
+    # Set up parser
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--debug', '-d', action='store_true', help='run the '
                         'django framework in debug mode (insecure).')

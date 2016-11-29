@@ -10,7 +10,7 @@ import xmlrpc.client
 import concurrent.futures
 try: # django>=1.8
     from django.template.context_processors import csrf
-except: # django==1.7
+except ImportError: # django==1.7
     from django.core.context_processors import csrf
 from django.http import HttpResponse
 from django.shortcuts import redirect, render_to_response
