@@ -21,7 +21,7 @@ from django.core.handlers.wsgi import WSGIHandler
 import suponoff
 
 
-def configure(site_path, supervisors, debug):
+def configure(site_path, supervisors, debug, metadata_dir):
     settings.configure(
         DEBUG=debug,
         ALLOWED_HOSTS = ['*'],
@@ -38,6 +38,7 @@ def configure(site_path, supervisors, debug):
             'suponoff',
         ),
         SUPERVISORS=supervisors,
+        METADATA_DIR = metadata_dir,
         STATIC_URL='/'+site_path+'static/',
         SITE_ROOT='/'+site_path,
         # django<=1.8
@@ -70,6 +71,9 @@ def main(args=None):
                         '"0.0.0.0", default "127.0.0.1").')
     parser.add_argument('--port', '-p', type=int, default=8000, help='the port'
                         ' on which the server is listening (default "8000").')
+    parser.add_argument('--metadata_dir', '-m', default='', help='directory '
+                        'contaning the metadata information used to tag, group'
+                        ' and filter processes in the suponoff app')
     parser.add_argument('host', nargs='*', help='one or more hosts to monitor '
                         '(if omitted, "localhost" is implied); the server will'
                         ' expect a supervisor listening at http://host:9001 '
@@ -91,7 +95,7 @@ def main(args=None):
 
     # Configure django
     site_path = (args.site_path.rstrip('/') + '/').lstrip('/')
-    configure(site_path, supervisors, args.debug)
+    configure(site_path, supervisors, args.debug, args.metadata_dir)
     django.setup()
     global urlpatterns
     urlpatterns = [url('^' + site_path, include('suponoff.urls')),]
