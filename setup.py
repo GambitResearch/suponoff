@@ -18,11 +18,12 @@ if __name__ == '__main__':
         include_package_data=True,
         packages=find_packages(),
         scripts=[
-            'suponoff-monhelper.py'
+            'suponoff-monhelper.py',
+            'suponoff-server.py'
         ],
 
         install_requires=[
-            "Django >= 1.7",  # just because I only tested with Django 1.7...
+            "Django >= 1.7",  # tested with django>=1.7,<=1.10
         ],
 
         classifiers=[

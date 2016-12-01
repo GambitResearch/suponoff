@@ -8,7 +8,10 @@ import configparser
 import xmlrpc.client
 
 import concurrent.futures
-from django.core.context_processors import csrf
+try: # django>=1.8
+    from django.template.context_processors import csrf
+except ImportError: # django==1.7
+    from django.core.context_processors import csrf
 from django.http import HttpResponse
 from django.shortcuts import redirect, render_to_response
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -22,14 +25,20 @@ LOG = logging.getLogger(__name__)
 
 
 def _get_supervisor(hostname):
-    supervisor = xmlrpc.client.ServerProxy("http://{}:9001".format(hostname),
-                                           verbose=False)
+    if isinstance(settings.SUPERVISORS, dict):
+        url = settings.SUPERVISORS[hostname][0]
+    else:
+        url = "http://{}:9001".format(hostname) 
+    supervisor = xmlrpc.client.ServerProxy(url, verbose=False)
     return supervisor
 
 
 def _get_monhelper(hostname):
-    monhelper = xmlrpc.client.ServerProxy(
-        "http://{}:9002".format(hostname), verbose=False)
+    if isinstance(settings.SUPERVISORS, dict):
+        url = settings.SUPERVISORS[hostname][1]
+    else:
+        url = "http://{}:9002".format(hostname) 
+    monhelper = xmlrpc.client.ServerProxy(url, verbose=False)
     return monhelper
 
 
